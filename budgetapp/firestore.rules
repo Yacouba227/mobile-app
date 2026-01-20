@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Permet à un utilisateur authentifié de créer et mettre à jour son propre document
+    // dans la collection 'users', où l'ID du document est l'ID de l'utilisateur.
+    match /users/{userId} {
+      allow read, create, update: if request.auth != null && request.auth.uid == userId;
+
+      // Nouvelle règle pour la sous-collection 'transactions'
+      match /transactions/{transactionId} {
+        allow read, create, update, delete: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // Cette règle garde le reste de la base de données protégé par défaut.
+    // Cela signifie que tout ce qui n'est PAS explicitement autorisé par une règle `match`
+    // plus spécifique (comme celle pour la collection 'users' ou 'transactions') reste interdit.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
